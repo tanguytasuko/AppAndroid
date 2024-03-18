@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.isen.cailleaux.androiderestaurant.ui.theme.AndroidERestaurantTheme
 
-class MainActivity : ComponentActivity() {
+class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HomeActivityScreen() {
     Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = "Entrée", style = MaterialTheme.typography.headlineLarge)
+        Text(text = "Entrée test", style = MaterialTheme.typography.headlineLarge)
         Text(text = "Plats", style = MaterialTheme.typography.headlineLarge)
         Text(text = "Dessert", style = MaterialTheme.typography.headlineLarge)
     }
