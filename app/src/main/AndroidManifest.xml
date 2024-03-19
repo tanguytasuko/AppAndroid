@@ -25,6 +25,9 @@
         <activity
             android:name=".CategoryActivity"
             android:exported="true" />
+        <activity
+            android:name=".DishDetailActivity"
+            android:exported="true" />
     </application>
 
 </manifest>
