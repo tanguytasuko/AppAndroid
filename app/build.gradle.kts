@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.androidx.material3)
     testImplementation(libs.junit)
     implementation("com.android.volley:volley:1.2.0")
+    implementation("com.google.code.gson:gson:2.8.9")
+    implementation("io.coil-kt:coil-compose:2.6.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

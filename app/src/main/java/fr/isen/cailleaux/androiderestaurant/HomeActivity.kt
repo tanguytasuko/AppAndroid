@@ -1,3 +1,5 @@
+// HomeActivity.kt
+
 package fr.isen.cailleaux.androiderestaurant
 
 import android.content.Intent
@@ -41,21 +43,27 @@ class HomeActivity : ComponentActivity() {
 fun HomeActivityScreen() {
     val context = LocalContext.current
     Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = "Entrées", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.clickable {
-            navigateToCategory("Entrées", context)
+        // Utilisez des variables pour les noms de catégories
+        val appetizers = "Entrées"
+        val mainCourses = "Plats"
+        val desserts = "Desserts"
+
+        // Utilisez ces variables dans les Texts correspondants
+        Text(text = appetizers, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.clickable {
+            navigateToCategory(appetizers, context)
         })
-        Text(text = "Plats", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.clickable {
-            navigateToCategory("Plats", context)
+        Text(text = mainCourses, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.clickable {
+            navigateToCategory(mainCourses, context)
         })
-        Text(text = "Desserts", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.clickable {
-            navigateToCategory("Desserts", context)
+        Text(text = desserts, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.clickable {
+            navigateToCategory(desserts, context)
         })
     }
 }
 
 fun navigateToCategory(category: String, context: android.content.Context) {
     val intent = Intent(context, CategoryActivity::class.java)
-    intent.putExtra("CATEGORY_NAME", category)
+    intent.putExtra("categoryName", category) // Utilisez "categoryName" comme clé
     context.startActivity(intent)
 }
 
