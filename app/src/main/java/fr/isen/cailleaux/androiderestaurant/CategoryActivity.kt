@@ -1,5 +1,6 @@
 package fr.isen.cailleaux.androiderestaurant
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Surface
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
@@ -95,7 +97,8 @@ private fun fetchMenuItems(categoryName: String, onResult: (List<MenuItem>) -> U
 
 @Composable
 fun MenuScreen(categoryName: String, items: List<MenuItem>) {
-        Column {
+    val context = LocalContext.current
+    Column {
             Text(
                 text = categoryName,
                 style = MaterialTheme.typography.headlineMedium,
@@ -103,7 +106,18 @@ fun MenuScreen(categoryName: String, items: List<MenuItem>) {
             )
             LazyColumn {
                 items(items) { item ->
-                    Card(modifier = Modifier.fillMaxWidth().background(Color.White)) {
+                    Card(modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val intent = Intent(context, DishDetailActivity::class.java).apply {
+                                putExtra("DISH_NAME", item.name_fr)
+                                putExtra("DISH_IMAGE_URL", item.images.firstOrNull())
+                                putExtra("DISH_INGREDIENTS", item.ingredients.joinToString { it.name_fr })
+                                putExtra("DISH_PRICE", item.prices.firstOrNull()?.price ?: "")
+                            }
+                            context.startActivity(intent)
+                        }
+                        .background(Color.White)) {
                         Column {
                             ImageFromUrls(urls = item.images) // Utilisez votre fonction composable pour afficher les images
                             Text(

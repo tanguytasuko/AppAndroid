@@ -20,22 +20,25 @@ class DishDetailActivity : ComponentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
                 val dishName = intent.getStringExtra("DISH_NAME") ?: "Dish Name"
+                val dishImageUrl = intent.getStringExtra("DISH_IMAGE_URL") ?: ""
+                val dishIngredients = intent.getStringExtra("DISH_INGREDIENTS") ?: ""
+                val dishPrice = intent.getStringExtra("DISH_PRICE") ?: ""
 
                 setContent {
                         AndroidERestaurantTheme {
-                                // Votre UI pour afficher le détail du plat
-                                DishDetailScreen(dishName)
+                                DishDetailScreen(dishName, dishImageUrl, dishIngredients, dishPrice)
                         }
                 }
         }
 }
 
 @Composable
-fun DishDetailScreen(dishName: String) {
-        Column (modifier = Modifier.background(Color.White)){
+fun DishDetailScreen(dishName: String, imageUrl: String, ingredients: String, price: String) {
+        Column(modifier = Modifier.background(Color.White)) {
                 Text(text = dishName, style = MaterialTheme.typography.headlineMedium)
-                // Utilisez Image() avec Coil pour charger l'image.
-                // Ajoutez plus de composables pour les autres informations du plat.
+                DishImage(imageUrl)
+                Text(text = "Ingredients: $ingredients", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Price: $price", style = MaterialTheme.typography.bodyMedium)
         }
 }
 
