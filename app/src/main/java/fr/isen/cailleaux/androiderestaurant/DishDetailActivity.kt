@@ -21,6 +21,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Button
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 
 class DishDetailActivity : ComponentActivity() {
@@ -41,16 +47,36 @@ class DishDetailActivity : ComponentActivity() {
 
 @Composable
 fun DishDetailScreen(dish: MenuItem) {
-        val scrollState = rememberScrollState()
-        Column(modifier = Modifier.background(Color.White).verticalScroll(scrollState)) {
-                Text(text = dish.name_fr, style = MaterialTheme.typography.headlineMedium)
-                DishImagesPager(dish.images)
-                Text(text = "Ingrédients: ${dish.ingredients.joinToString { it.name_fr }}",
-                        style = MaterialTheme.typography.bodyMedium)
+        // État pour suivre la quantité choisie
+        var quantity by remember { mutableStateOf(1) }
+        val pricePerItem = dish.prices.firstOrNull()?.price?.toFloatOrNull() ?: 0f
+        val totalPrice = pricePerItem * quantity
 
-                // Supposons que dish.prices contient plusieurs éléments et que vous voulez afficher le premier
-                Text(text = "Prix: ${dish.prices.firstOrNull()?.price ?: "Non disponible"}",
-                        style = MaterialTheme.typography.bodyMedium)
+        Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = dish.name_fr, style = MaterialTheme.typography.headlineMedium)
+                // Carousel d'images ou tout autre contenu que vous souhaitez montrer
+                DishImagesPager(imageUrls = dish.images)
+
+                // Sélecteur de quantité
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                        Button(onClick = { if (quantity > 1) quantity-- }) {
+                                Text("-")
+                        }
+                        Text("$quantity", Modifier.padding(horizontal = 8.dp))
+                        Button(onClick = { quantity++ }) {
+                                Text("+")
+                        }
+                }
+
+                // Affichage du prix total
+                Text("Prix total : $totalPrice €", style = MaterialTheme.typography.bodyLarge)
+
+                // Bouton d'ajout au panier
+                Button(onClick = {
+                        // Ici, ajoutez la logique pour ajouter au panier
+                }) {
+                        Text("Ajouter au panier")
+                }
         }
 }
 
