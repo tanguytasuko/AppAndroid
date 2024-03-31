@@ -56,7 +56,6 @@ fun HomeActivityScreen() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Header()
         Image(
             painter = painterResource(id = R.drawable.snow_world_1),
             contentDescription = "Restaurant Image",
@@ -92,25 +91,6 @@ fun HomeActivityScreen() {
         MenuItem(text = desserts) {
             navigateToCategory(desserts, context)
         }
-    }
-}
-
-@Composable
-fun Header() {
-    Surface(
-        color = Color(0xFF001F3F), // Couleur de fond bleu navy
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp) // Hauteur de l'en-tête
-    ) {
-        Text(
-            text = "TanguyRestaurant",
-            color = Color.White, // Couleur du texte blanc
-            style = MaterialTheme.typography.headlineMedium, // Style du texte
-            modifier = Modifier
-                .fillMaxSize()
-                .wrapContentSize(Alignment.Center) // Alignement au centre
-        )
     }
 }
 

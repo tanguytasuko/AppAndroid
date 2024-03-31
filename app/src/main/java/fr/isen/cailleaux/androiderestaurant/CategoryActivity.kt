@@ -15,14 +15,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import org.json.JSONObject
-
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Card
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 
 class CategoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +47,7 @@ class CategoryActivity : ComponentActivity() {
             val menuItems = remember { mutableStateOf<List<MenuItem>>(listOf()) }
 
             AndroidERestaurantTheme {
-                Surface(color = MaterialTheme.colorScheme.background) {
+                Surface(color = MaterialTheme.colorScheme.background)  {
                     // Remplacez MenuScreen par le composant d'affichage de votre choix
                     MenuScreen(categoryName = categoryName, items = menuItems.value)
                 }
@@ -81,19 +95,28 @@ private fun fetchMenuItems(categoryName: String, onResult: (List<MenuItem>) -> U
 
 @Composable
 fun MenuScreen(categoryName: String, items: List<MenuItem>) {
-    Column {
-        Text(
-            text = categoryName,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(16.dp)
-        )
-        LazyColumn {
-            items(items) { item ->
-                MenuItemComposable(item)
+        Column {
+            Text(
+                text = categoryName,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            LazyColumn {
+                items(items) { item ->
+                    Card(modifier = Modifier.fillMaxWidth().background(Color.White)) {
+                        Column {
+                            ImageFromUrls(urls = item.images) // Utilisez votre fonction composable pour afficher les images
+                            Text(
+                                text = item.name_fr,
+                                modifier = Modifier.padding(16.dp)
+                            ) // Affichez le nom du plat
+                            // Ici, vous pouvez ajouter d'autres détails comme les ingrédients ou le prix
+                        }
+                    }
+                }
             }
         }
     }
-}
 
 @Composable
 fun MenuItemComposable(item: MenuItem) {
@@ -101,9 +124,40 @@ fun MenuItemComposable(item: MenuItem) {
         text = item.name_fr,
         modifier = Modifier
             .padding(16.dp)
-
     )
 }
+
+
+@Composable
+fun ImageFromUrls(urls: List<String>) {
+    var currentUrlIndex by rememberSaveable { mutableStateOf(0) }
+
+    // Utilisez LocalContext.current seulement à l'intérieur d'une fonction Composable
+    val context = LocalContext.current
+
+    // Vous pouvez omettre les paramètres de builder si vous n'avez pas besoin de les personnaliser
+    AsyncImage(
+        model = ImageRequest.Builder(context)
+            .data(urls.getOrNull(currentUrlIndex)) // Utilisez l'URL à l'indice courant
+            .error(android.R.drawable.ic_dialog_alert) // Fallback en cas d'erreur
+            .build(),
+        contentDescription = null, // Fournissez une description appropriée pour l'accessibilité.
+        modifier = Modifier
+            .size(150.dp) // Définissez la taille de l'image. Ajustez selon vos besoins.
+            .aspectRatio(1f),
+        contentScale = ContentScale.Crop, // Gère comment l'image doit être redimensionnée ou déplacée pour remplir les dimensions données.
+        onLoading = {
+            // Affichez un indicateur de chargement si nécessaire
+        },
+        onError = {
+            // Passez à l'URL suivante si une image ne se charge pas
+            if (currentUrlIndex < urls.size - 1) {
+                currentUrlIndex++
+            }
+        }
+    )
+}
+
 
 data class MenuResponse(
     val data: List<Category>
