@@ -2,6 +2,7 @@ package fr.isen.cailleaux.androiderestaurant
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -38,7 +39,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import java.io.Serializable
 
 class CategoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,10 +111,7 @@ fun MenuScreen(categoryName: String, items: List<MenuItem>) {
                         .fillMaxWidth()
                         .clickable {
                             val intent = Intent(context, DishDetailActivity::class.java).apply {
-                                putExtra("DISH_NAME", item.name_fr)
-                                putExtra("DISH_IMAGE_URL", item.images.firstOrNull())
-                                putExtra("DISH_INGREDIENTS", item.ingredients.joinToString { it.name_fr })
-                                putExtra("DISH_PRICE", item.prices.firstOrNull()?.price ?: "")
+                                putExtra("DISH_DETAIL", item)
                             }
                             context.startActivity(intent)
                         }
@@ -188,25 +186,25 @@ data class MenuItem(
     val id_category: String,
     val categ_name_fr: String,
     val images: List<String>,
-    val ingredients: List<Ingredient>, // Liste des ingrédients de l'item
-    val prices: List<Price> // Liste des prix de l'item
-)
+    val ingredients: List<Ingredient>, // Assurez-vous que cette classe est Serializable
+    val prices: List<Price> // Assurez-vous que cette classe est Serializable
+) : Serializable
 
 data class Ingredient(
-    val id: String, // Identifiant de l'ingrédient
-    val id_shop: String, // Identifiant du magasin/shop
-    val name_fr: String, // Nom français de l'ingrédient
-    val create_date: String, // Date de création de l'ingrédient
-    val update_date: String, // Date de mise à jour de l'ingrédient
-    val id_pizza: String? // Identifiant de la pizza (si applicable, peut ne pas être présent pour tous les ingrédients, donc nullable)
-)
+    val id: String,
+    val id_shop: String,
+    val name_fr: String,
+    val create_date: String,
+    val update_date: String,
+    val id_pizza: String?
+) : Serializable // Ajoutez Serializable ici
 
 data class Price(
-    val id: String, // Identifiant du prix
-    val id_pizza: String, // Identifiant de la pizza
-    val id_size: String, // Identifiant de la taille
-    val price: String, // Valeur du prix
-    val create_date: String, // Date de création du prix
-    val update_date: String, // Date de mise à jour du prix
-    val size: String // Taille correspondante au prix
-)
+    val id: String,
+    val id_pizza: String,
+    val id_size: String,
+    val price: String,
+    val create_date: String,
+    val update_date: String,
+    val size: String
+) : Serializable // Ajoutez Serializable ici
