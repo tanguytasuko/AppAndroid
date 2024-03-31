@@ -28,6 +28,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import android.content.Context
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import com.google.gson.Gson
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 class DishDetailActivity : ComponentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +58,9 @@ fun DishDetailScreen(dish: MenuItem) {
         var quantity by remember { mutableStateOf(1) }
         val pricePerItem = dish.prices.firstOrNull()?.price?.toFloatOrNull() ?: 0f
         val totalPrice = pricePerItem * quantity
+        val snackbarHostState = remember { SnackbarHostState() }
+        val scope = rememberCoroutineScope()
+        val context = LocalContext.current
 
         Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = dish.name_fr, style = MaterialTheme.typography.headlineMedium)
@@ -73,10 +83,13 @@ fun DishDetailScreen(dish: MenuItem) {
 
                 // Bouton d'ajout au panier
                 Button(onClick = {
-                        // Ici, ajoutez la logique pour ajouter au panier
+                        scope.launch {
+                                addToCart(context, dish, quantity, snackbarHostState)
+                        }
                 }) {
                         Text("Ajouter au panier")
                 }
+                SnackbarHost(hostState = snackbarHostState)
         }
 }
 
@@ -101,3 +114,27 @@ fun DishImagesPager(imageUrls: List<String>) {
                 )
         }
 }
+
+suspend fun addToCart(context: Context, dish: MenuItem, quantity: Int, snackbarHostState: SnackbarHostState) {
+        val cartItem = CartItem(dish = dish, quantity = quantity)
+        val cartJson = Gson().toJson(cartItem)
+        context.openFileOutput("cart.json", Context.MODE_APPEND).use {
+                it.write((cartJson + "\n").toByteArray())
+        }
+        val result = snackbarHostState.showSnackbar(
+                message = "Article ajouté au panier !",
+                actionLabel = "Voir"
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+                // Action à effectuer si "Voir" est cliqué
+        }
+
+        val sharedPref = context.getSharedPreferences("MyPref", Context.MODE_PRIVATE)
+        val currentCount = sharedPref.getInt("cart_count", 0)
+        with(sharedPref.edit()) {
+                putInt("cart_count", currentCount + quantity)
+                apply()
+        }
+}
+
+data class CartItem(val dish: MenuItem, val quantity: Int)
