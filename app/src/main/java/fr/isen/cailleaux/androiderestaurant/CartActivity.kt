@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.io.BufferedReader
 
 class CartActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +40,7 @@ class CartActivity : ComponentActivity() {
             val cartItems = remember { loadCartItems() }
             CartScreen(cartItems = cartItems, onClearCart = {
                 clearCart()
-                recreate() // Refresh the screen
+                recreate()
             })
         }
     }
@@ -51,7 +50,7 @@ class CartActivity : ComponentActivity() {
         return try {
             applicationContext.openFileInput(fileName).use { inputStream ->
                 val text = inputStream.bufferedReader().readText()
-                Log.d("CartActivity", "Reading cart JSON: $text") // Ajoutez cette ligne pour imprimer le contenu du JSON
+                Log.d("CartActivity", "Reading cart JSON: $text")
                 val gson = Gson()
                 val cartDataType = object : TypeToken<List<CartItem>>() {}.type
                 gson.fromJson<List<CartItem>>(text, cartDataType)
@@ -69,7 +68,7 @@ class CartActivity : ComponentActivity() {
 
     private fun clearCart() {
         val fileName = "cart.json"
-        deleteFile(fileName) // Clears the cart by deleting the file
+        deleteFile(fileName)
     }
 }
 

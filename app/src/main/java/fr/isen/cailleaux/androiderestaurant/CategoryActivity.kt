@@ -2,7 +2,6 @@ package fr.isen.cailleaux.androiderestaurant
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -17,49 +16,67 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.Surface
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import org.json.JSONObject
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import java.io.Serializable
 
 class CategoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val categoryName = intent.getStringExtra("categoryName") ?: "Catégorie"
-
         setContent {
             val menuItems = remember { mutableStateOf<List<MenuItem>>(listOf()) }
-
             AndroidERestaurantTheme {
-                Surface(color = MaterialTheme.colorScheme.background)  {
-                    // Remplacez MenuScreen par le composant d'affichage de votre choix
-                    MenuScreen(categoryName = categoryName, items = menuItems.value)
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    Scaffold(
+                        topBar = {
+                            TopBar(title = categoryName)
+                        },
+                        content = { paddingValues ->
+                            MenuScreen(
+                                categoryName = categoryName,
+                                items = menuItems.value,
+                                modifier = Modifier.padding(paddingValues)
+                            )
+                        }
+                    )
                 }
             }
-
             fetchMenuItems(categoryName) { items ->
                 menuItems.value = items
             }
         }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun TopBar(title: String) {
+        TopAppBar(
+            title = { Text(text = title, color = Color.White, fontWeight = FontWeight.Bold) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        )
     }
 
 private fun fetchMenuItems(categoryName: String, onResult: (List<MenuItem>) -> Unit) {
@@ -70,7 +87,7 @@ private fun fetchMenuItems(categoryName: String, onResult: (List<MenuItem>) -> U
 
     val jsonObjectRequest = JsonObjectRequest(Request.Method.POST, url, params,
         { response ->
-            Log.d("CategoryActivity", "Réponse de l'API: $response") // Ajout du log ici
+            Log.d("CategoryActivity", "Réponse de l'API: $response")
             try {
                 val gson = Gson()
                 val menuResponse = gson.fromJson(response.toString(), MenuResponse::class.java)
@@ -97,38 +114,54 @@ private fun fetchMenuItems(categoryName: String, onResult: (List<MenuItem>) -> U
 }
 
 @Composable
-fun MenuScreen(categoryName: String, items: List<MenuItem>) {
+fun MenuScreen(categoryName: String, items: List<MenuItem>, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    Column {
-            Text(
-                text = categoryName,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp)
-            )
-            LazyColumn {
-                items(items) { item ->
-                    Card(modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            val intent = Intent(context, DishDetailActivity::class.java).apply {
-                                putExtra("DISH_DETAIL", item)
-                            }
-                            context.startActivity(intent)
-                        }
-                        .background(Color.White)) {
-                        Column {
-                            ImageFromUrls(urls = item.images) // Utilisez votre fonction composable pour afficher les images
-                            Text(
-                                text = item.name_fr,
-                                modifier = Modifier.padding(16.dp)
-                            ) // Affichez le nom du plat
-                            // Ici, vous pouvez ajouter d'autres détails comme les ingrédients ou le prix
-                        }
-                    }
-                }
-            }
+    LazyColumn(modifier = modifier) {
+        items(items) { item ->
+            MenuItemCard(item = item, onClick = {
+                context.startActivity(Intent(context, DishDetailActivity::class.java).putExtra("DISH_DETAIL", item))
+            })
         }
     }
+}
+
+@Composable
+fun MenuItemCard(item: MenuItem, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            item.images.firstOrNull()?.let { imageUrl ->
+                DishImage(imageUrl)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = item.name_fr,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            )
+        }
+    }
+}
+
+@Composable
+fun DishImage(imageUrl: String) {
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl)
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        modifier = Modifier
+            .height(150.dp)
+            .fillMaxWidth(),
+        contentScale = ContentScale.Crop
+    )
+}
 
 @Composable
 fun MenuItemComposable(item: MenuItem) {
@@ -142,32 +175,19 @@ fun MenuItemComposable(item: MenuItem) {
 
 @Composable
 fun ImageFromUrls(urls: List<String>) {
-    var currentUrlIndex by rememberSaveable { mutableStateOf(0) }
-
-    // Utilisez LocalContext.current seulement à l'intérieur d'une fonction Composable
-    val context = LocalContext.current
-
-    // Vous pouvez omettre les paramètres de builder si vous n'avez pas besoin de les personnaliser
-    AsyncImage(
-        model = ImageRequest.Builder(context)
-            .data(urls.getOrNull(currentUrlIndex)) // Utilisez l'URL à l'indice courant
-            .error(android.R.drawable.ic_dialog_alert) // Fallback en cas d'erreur
-            .build(),
-        contentDescription = null, // Fournissez une description appropriée pour l'accessibilité.
-        modifier = Modifier
-            .size(150.dp) // Définissez la taille de l'image. Ajustez selon vos besoins.
-            .aspectRatio(1f),
-        contentScale = ContentScale.Crop, // Gère comment l'image doit être redimensionnée ou déplacée pour remplir les dimensions données.
-        onLoading = {
-            // Affichez un indicateur de chargement si nécessaire
-        },
-        onError = {
-            // Passez à l'URL suivante si une image ne se charge pas
-            if (currentUrlIndex < urls.size - 1) {
-                currentUrlIndex++
-            }
-        }
-    )
+    urls.firstOrNull()?.let { url ->
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(url)
+                .error(android.R.drawable.ic_dialog_alert)
+                .build(),
+            contentDescription = null,
+            modifier = Modifier
+                .height(150.dp)
+                .fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
+    }
 }
 
 
@@ -186,8 +206,8 @@ data class MenuItem(
     val id_category: String,
     val categ_name_fr: String,
     val images: List<String>,
-    val ingredients: List<Ingredient>, // Assurez-vous que cette classe est Serializable
-    val prices: List<Price> // Assurez-vous que cette classe est Serializable
+    val ingredients: List<Ingredient>,
+    val prices: List<Price>
 ) : Serializable
 
 data class Ingredient(
@@ -197,7 +217,7 @@ data class Ingredient(
     val create_date: String,
     val update_date: String,
     val id_pizza: String?
-) : Serializable // Ajoutez Serializable ici
+) : Serializable
 
 data class Price(
     val id: String,
@@ -207,4 +227,4 @@ data class Price(
     val create_date: String,
     val update_date: String,
     val size: String
-) : Serializable // Ajoutez Serializable ici
+) : Serializable

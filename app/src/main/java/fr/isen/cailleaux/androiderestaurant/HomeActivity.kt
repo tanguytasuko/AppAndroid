@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,7 +61,7 @@ fun HomeScreen() {
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier.padding(innerPadding), // Utilisez innerPadding ici pour ajouter le padding nécessaire autour de votre contenu.
+            modifier = Modifier.padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
@@ -75,7 +74,6 @@ fun HomeScreen() {
                     .padding(bottom = 16.dp)
             )
 
-            // Texte d'en-tête
             Text(
                 text = "Choisissez à manger",
                 style = MaterialTheme.typography.headlineMedium,
@@ -85,12 +83,10 @@ fun HomeScreen() {
             )
 
 
-            // Utilisation de vos variables existantes pour les catégories
             val appetizers = "Entrées"
             val mainCourses = "Plats"
             val desserts = "Desserts"
 
-            // Affichage des catégories avec un design attrayant
             MenuItem(text = appetizers) {
                 navigateToCategory(appetizers, context)
             }
@@ -109,15 +105,15 @@ fun MenuItem(text: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp) // Ajout d'un espace autour du MenuItem
+            .padding(8.dp)
             .clickable(onClick = onClick),
-        color = Color(0xFF001F3F), // Couleur de fond bleu navy
-        shape = RoundedCornerShape(8.dp) // Forme arrondie des coins
+        color = Color(0xFF001F3F),
+        shape = RoundedCornerShape(8.dp)
     ) {
         Text(
             text = text,
-            color = Color.White, // Couleur du texte blanc
-            style = MaterialTheme.typography.bodyLarge, // Style du texte
+            color = Color.White,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(16.dp)
         )
     }

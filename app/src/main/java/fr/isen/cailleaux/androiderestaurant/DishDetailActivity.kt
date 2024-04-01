@@ -45,7 +45,6 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
 
 
 class DishDetailActivity : ComponentActivity() {
@@ -147,7 +146,6 @@ fun DishImagesPager(imageUrls: List<String>) {
         }
 }
 
-// Ajoutez la variable scope comme paramètre à addToCart
 suspend fun addToCart(
         context: Context,
         newItem: MenuItem,
@@ -164,7 +162,6 @@ suspend fun addToCart(
         }
         saveCartItems(context, cartItems)
 
-        // Correction: Utilisation de `newItem` au lieu de `item`
         val message = "$quantity x ${newItem.name_fr} ajouté(s) au panier."
         scope.launch {
                 val result = snackbarHostState.showSnackbar(
