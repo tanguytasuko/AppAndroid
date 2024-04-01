@@ -26,26 +26,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.TopAppBar
 import com.google.gson.Gson
 import androidx.compose.runtime.rememberCoroutineScope
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.io.BufferedReader
-import java.io.FileNotFoundException
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+
 
 class DishDetailActivity : ComponentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
-                val dish = intent.getSerializableExtra("DISH_DETAIL") as? MenuItem // Assurez-vous que c'est Serializable
+                val dish = intent.getSerializableExtra("DISH_DETAIL") as? MenuItem
 
                 setContent {
                         AndroidERestaurantTheme {
-                                // Ici, vérifiez si dish n'est pas null
                                 dish?.let {
                                         DishDetailScreen(it)
                                 }
@@ -54,58 +63,79 @@ class DishDetailActivity : ComponentActivity() {
         }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DishDetailScreen(dish: MenuItem) {
-        // État pour suivre la quantité choisie
-        var quantity by remember { mutableStateOf(1) }
-        val pricePerItem = dish.prices.firstOrNull()?.price?.toFloatOrNull() ?: 0f
-        val totalPrice = pricePerItem * quantity
         val snackbarHostState = remember { SnackbarHostState() }
-        val scope = rememberCoroutineScope()
+        val coroutineScope = rememberCoroutineScope()
+        var quantity by remember { mutableStateOf(1) }
         val context = LocalContext.current
 
-        Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = dish.name_fr, style = MaterialTheme.typography.headlineMedium)
-                // Carousel d'images ou tout autre contenu que vous souhaitez montrer
-                DishImagesPager(imageUrls = dish.images)
+        Scaffold(
+                topBar = {
+                        TopAppBar(title = { Text(dish.name_fr) })
+                },
+                snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        ) {
+                Column(
+                        modifier = Modifier
+                                .padding(it)
+                                .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                        DishImagesPager(imageUrls = dish.images)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                                text = dish.name_fr,
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                                text = "Ingredients: ${dish.ingredients.joinToString { it.name_fr }}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        QuantitySelector(quantity) { newQuantity -> quantity = newQuantity }
 
-                // Sélecteur de quantité
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                        Button(onClick = { if (quantity > 1) quantity-- }) {
-                                Text("-")
-                        }
-                        Text("$quantity", Modifier.padding(horizontal = 8.dp))
-                        Button(onClick = { quantity++ }) {
-                                Text("+")
+                        Button(
+                                onClick = {
+                                        coroutineScope.launch {
+                                                addToCart(context, dish, quantity, snackbarHostState, coroutineScope)
+                                        }
+                                },
+                                modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                        ) {
+                                Text("Ajouter au panier")
                         }
                 }
+        }
+}
 
-                // Affichage du prix total
-                Text("Prix total : $totalPrice €", style = MaterialTheme.typography.bodyLarge)
-
-                // Bouton d'ajout au panier
-                Button(onClick = {
-                        scope.launch {
-                                addToCart(context, dish, quantity, snackbarHostState, scope)
-                        }
-                }) {
-                        Text("Ajouter au panier")
+@Composable
+fun QuantitySelector(quantity: Int, onQuantityChanged: (Int) -> Unit) {
+        Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(8.dp)
+        ) {
+                IconButton(onClick = { if (quantity > 1) onQuantityChanged(quantity - 1) }) {
+                        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Moins")
                 }
-                SnackbarHost(hostState = snackbarHostState)
+                Text("$quantity", Modifier.padding(horizontal = 8.dp))
+                IconButton(onClick = { onQuantityChanged(quantity + 1) }) {
+                        Icon(Icons.Filled.Add, contentDescription = "Plus")
+                }
         }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DishImagesPager(imageUrls: List<String>) {
-        val pagerState = rememberPagerState(pageCount = {imageUrls.size})
-
-        HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                        .height(200.dp)
-                        .fillMaxWidth(),
-        ) { page ->
+        val pagerState = rememberPagerState(pageCount = { imageUrls.size })
+        HorizontalPager(state = pagerState, modifier = Modifier.height(200.dp)) { page ->
                 AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                                 .data(imageUrls[page])
@@ -134,15 +164,15 @@ suspend fun addToCart(
         }
         saveCartItems(context, cartItems)
 
-        // Affichage du Snackbar avec une action "Voir"
+        // Correction: Utilisation de `newItem` au lieu de `item`
+        val message = "$quantity x ${newItem.name_fr} ajouté(s) au panier."
         scope.launch {
                 val result = snackbarHostState.showSnackbar(
-                        message = "Article ajouté au panier !",
-                        actionLabel = "Voir",
-                        duration = SnackbarDuration.Long
+                        message = message,
+                        actionLabel = "Voir le panier",
+                        duration = SnackbarDuration.Indefinite
                 )
                 if (result == SnackbarResult.ActionPerformed) {
-                        // Naviguer vers CartActivity si "Voir" est cliqué
                         context.startActivity(Intent(context, CartActivity::class.java))
                 }
         }
