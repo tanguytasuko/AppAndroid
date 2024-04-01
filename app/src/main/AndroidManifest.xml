@@ -29,6 +29,9 @@
         <activity
             android:name=".DishDetailActivity"
             android:exported="true" />
+        <activity
+            android:name=".CartActivity"
+            android:exported="true" />
     </application>
 
 </manifest>

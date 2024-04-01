@@ -8,16 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import fr.isen.cailleaux.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -29,12 +25,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import android.content.Context
+import android.content.Intent
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import com.google.gson.Gson
 import androidx.compose.runtime.rememberCoroutineScope
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.BufferedReader
+import java.io.FileNotFoundException
 
 class DishDetailActivity : ComponentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,7 +86,7 @@ fun DishDetailScreen(dish: MenuItem) {
                 // Bouton d'ajout au panier
                 Button(onClick = {
                         scope.launch {
-                                addToCart(context, dish, quantity, snackbarHostState)
+                                addToCart(context, dish, quantity, snackbarHostState, scope)
                         }
                 }) {
                         Text("Ajouter au panier")
@@ -115,26 +117,58 @@ fun DishImagesPager(imageUrls: List<String>) {
         }
 }
 
-suspend fun addToCart(context: Context, dish: MenuItem, quantity: Int, snackbarHostState: SnackbarHostState) {
-        val cartItem = CartItem(dish = dish, quantity = quantity)
-        val cartJson = Gson().toJson(cartItem)
-        context.openFileOutput("cart.json", Context.MODE_APPEND).use {
-                it.write((cartJson + "\n").toByteArray())
+// Ajoutez la variable scope comme paramètre à addToCart
+suspend fun addToCart(
+        context: Context,
+        newItem: MenuItem,
+        quantity: Int,
+        snackbarHostState: SnackbarHostState,
+        scope: CoroutineScope
+) {
+        val cartItems: MutableList<CartItem> = loadCartItems(context)
+        val existingItem = cartItems.find { it.dish.id == newItem.id }
+        if (existingItem != null) {
+                existingItem.quantity += quantity
+        } else {
+                cartItems.add(CartItem(newItem, quantity))
         }
-        val result = snackbarHostState.showSnackbar(
-                message = "Article ajouté au panier !",
-                actionLabel = "Voir"
-        )
-        if (result == SnackbarResult.ActionPerformed) {
-                // Action à effectuer si "Voir" est cliqué
-        }
+        saveCartItems(context, cartItems)
 
-        val sharedPref = context.getSharedPreferences("MyPref", Context.MODE_PRIVATE)
-        val currentCount = sharedPref.getInt("cart_count", 0)
-        with(sharedPref.edit()) {
-                putInt("cart_count", currentCount + quantity)
-                apply()
+        // Affichage du Snackbar avec une action "Voir"
+        scope.launch {
+                val result = snackbarHostState.showSnackbar(
+                        message = "Article ajouté au panier !",
+                        actionLabel = "Voir",
+                        duration = SnackbarDuration.Long
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                        // Naviguer vers CartActivity si "Voir" est cliqué
+                        context.startActivity(Intent(context, CartActivity::class.java))
+                }
         }
 }
 
-data class CartItem(val dish: MenuItem, val quantity: Int)
+
+fun loadCartItems(context: Context): MutableList<CartItem> {
+        val fileName = "cart.json"
+        val gson = Gson()
+        val file = context.getFileStreamPath(fileName)
+        return if (file.exists()) {
+                context.openFileInput(fileName).use { inputStream ->
+                        val reader = inputStream.reader()
+                        gson.fromJson(reader, object : TypeToken<List<CartItem>>() {}.type) ?: mutableListOf()
+                }
+        } else {
+                mutableListOf()
+        }
+}
+
+fun saveCartItems(context: Context, cartItems: List<CartItem>) {
+        val fileName = "cart.json"
+        val gson = Gson()
+        context.openFileOutput(fileName, Context.MODE_PRIVATE).use { outputStream ->
+                val writer = outputStream.writer()
+                gson.toJson(cartItems, writer)
+                writer.close()
+        }
+}
